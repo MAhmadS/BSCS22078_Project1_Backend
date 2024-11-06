@@ -1,0 +1,18 @@
+{
+  "name": "bscs22078_project1_backend",
+  "version": "1.0.0",
+  "description": "Air bnb clone backend",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "M Ahmad S",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}
