@@ -114,7 +114,7 @@ app.get("/api/listings/:id", (req, res) => {
   res.send(JSON.stringify(listingData)).status(200);
 });
 
-app.post("/api/listings", (req, res) => {
+app.post("/api/bookings", (req, res) => {
   const newListing = {id: listingsData.length + 1, ...req.body};
   listingsData.push(newListing);
   console.log(listingsData);
