@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
+
 const listingsData = [
   {
     id: 1,
@@ -94,6 +95,7 @@ const listingsData = [
     rating: "5",
   },
 ];
+const bookingsData = [];
 
 app.use(cors());
 app.use(express.json());
@@ -112,14 +114,14 @@ app.get("/api/listings/search", (req, res) => {
 
 app.get("/api/listings/:id", (req, res) => {
   const id = req.params.id;
-  const listingData = listingsData.filter((listing) => listing.id == id);
+  const listingData = listingsData.find((listing) => listing.id == id);
   res.send(JSON.stringify(listingData)).status(200);
 });
 
 app.post("/api/bookings", (req, res) => {
-  const newListing = {id: listingsData.length + 1, ...req.body};
-  listingsData.push(newListing);
-  console.log(listingsData);
+  const newListing = {id: bookingsData.length + 1, ...req.body};
+  bookingsData.push(newListing);
+  console.log(bookingsData);
   res.send(JSON.stringify(newListing)).status(200);
 });
 
