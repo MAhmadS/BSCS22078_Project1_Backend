@@ -106,6 +106,10 @@ app.get("/api/listings", (req, res) => {
 
 app.get("/api/listings/search", (req, res) => {
   const query = req.query.query;
+  if(query === "") {
+    res.send(JSON.stringify(listingsData)).status(200);
+    return;
+  }
   const listingData = listingsData.filter((data) =>
     data.location.toLowerCase().includes(query.toLowerCase())
   );
