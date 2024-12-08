@@ -125,7 +125,22 @@ const getListingById = async (req, res, next) => {
 };
 
 const createListing = async (req, res, next) => {
-  if (req.userId.id !== process.env.ADMIN_ID) {
+  if (!req.userId) {
+    const error = {
+      message: "Login to create a listing.",
+      code: 401,
+    };
+    return next(error);
+  }
+  const user = User.findById(req.userId.id);
+  if (!user) {
+    const error = {
+      message: "You are not authorized to create a listing.",
+      code: 401,
+    };
+    return next(error);
+  }
+  if (user.role !== "host") {
     const error = {
       message: "You are not authorized to create a listing.",
       code: 401,
@@ -158,10 +173,18 @@ const createListing = async (req, res, next) => {
     info,
     pricePerNight,
     rating,
+    creator: req.userId.id,
   });
 
   try {
-    const listing = await newListing.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await newListing.save();
+    user.listings.push(newListing);
+    await user.save();
+    await session.commitTransaction();
+    session.endSession();
+
     res.json(listing.toObject({ getters: true })).status(201);
   } catch (err) {
     const error = {
@@ -173,18 +196,26 @@ const createListing = async (req, res, next) => {
 };
 
 const RemoveListing = async (req, res, next) => {
-  if (req.userId.id !== process.env.ADMIN_ID) {
+  const id = req.params.id;
+
+  if (!req.userId) {
     const error = {
-      message: "You are not authorized to create a listing.",
+      message: "Login to remove a listing.",
+      code: 401,
+    };
+    return next(error);
+  }
+  const user = User.findById(req.userId.id).populate("listings");
+  if (!user) {
+    const error = {
+      message: "You are not authorized to remove a listing.",
       code: 401,
     };
     return next(error);
   }
 
-  const id = req.params.id;
-
   try {
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findOne({ _id: id });
     if (!listing) {
       const error = {
         message: "Could not find a listing for the provided id.",
@@ -192,7 +223,21 @@ const RemoveListing = async (req, res, next) => {
       };
       return next(error);
     }
-    await listing.remove();
+    if (listing.creator.toString() !== req.userId.id) {
+      const error = {
+        message: "You are not authorized to delete this listing.",
+        code: 401,
+      };
+      return next(error);
+    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    user.listings.pull(listing);
+    await user.save({ session: session });
+    await listing.remove({ session: session });
+    await session.commitTransaction();
+    session.endSession();
+
     res.json({ message: "Deleted Successfully" }).status(200);
   } catch (err) {
     const error = {

@@ -9,6 +9,7 @@ const ListingSchema = new mongoose.Schema({
   info: { guests: Number, bedrooms: Number, bathrooms: Number },
   pricePerNight: { type: String, required: true },
   rating: { type: String, required: true },
+  creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 
 module.exports = mongoose.model("Listing", ListingSchema);

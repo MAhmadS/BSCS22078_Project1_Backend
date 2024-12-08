@@ -14,7 +14,7 @@ router.use(jwt);
 //only admin is allowed
 
 router.post(
-  "/add",
+  "/",
   FileUpload.single("image"),
   [
     check("title").notEmpty(),
@@ -27,6 +27,6 @@ router.post(
   listingController.createListing
 );
 
-router.post("/remove", listingController.RemoveListing);
+router.delete("/:id", listingController.RemoveListing);
 
 module.exports.listingRouter = router;

@@ -45,7 +45,7 @@ const registerUser = async (req, res, next) => {
     return next(error);
   }
 
-  const { avatar, name, email, password } = req.body;
+  const { avatar, name, email, password, role } = req.body;
   let user;
   try {
     user = await User.findOne({
@@ -72,6 +72,7 @@ const registerUser = async (req, res, next) => {
     avatar,
     name,
     email,
+    role,
     password: hashedPassword,
     bookings: [],
   });

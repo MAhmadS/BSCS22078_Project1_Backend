@@ -2,32 +2,41 @@ const Listing = require("../models/Listing");
 const Booking = require("../models/Booking");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const { validationResult } = require("express-validator");
 
 const createBooking = async (req, res, next) => {
-  const { listingId, name, email, phone, checkIn, checkOut, bookingUser } =
-    req.body;
-
-  if (!listingId || !name || !email || !phone || !checkIn || !checkOut) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
     const error = {
-      message: "Missing required fields.",
-      code: 400,
+      message: "Invalid inputs passed, please check your data.",
+      code: 422,
     };
     return next(error);
   }
 
-  const listing = await Listing.findById(listingId);
-  if (!listing) {
+  if (!req.userId) {
     const error = {
-      message: "Could not find a listing for the provided id.",
+      message: "Login to create a booking.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  const user = await User.findById(req.userId.id).populate("bookings");
+  if (!user) {
+    const error = {
+      message: "Could not find a user for the provided id.",
       code: 404,
     };
     return next(error);
   }
 
-  const user = await User.findById(bookingUser);
-  if (!user) {
+  const { listingId, name, email, phone, checkIn, checkOut } = req.body;
+
+  const listing = await Listing.findById(listingId);
+  if (!listing) {
     const error = {
-      message: "Could not find a user for the provided id.",
+      message: "Could not find a listing for the provided id.",
       code: 404,
     };
     return next(error);
@@ -40,7 +49,7 @@ const createBooking = async (req, res, next) => {
     phone,
     checkIn,
     checkOut,
-    bookingUser,
+    bookingUser: req.userId.id,
   });
 
   try {
@@ -51,6 +60,7 @@ const createBooking = async (req, res, next) => {
     await user.save({ session: session });
     await session.commitTransaction();
     session.endSession();
+    res.json(booking.toObject({ getters: true })).status(201);
   } catch (err) {
     const error = {
       message: "Error creating booking.",
@@ -58,7 +68,6 @@ const createBooking = async (req, res, next) => {
     };
     return next(error);
   }
-  res.json(booking.toObject({ getters: true })).status(201);
 };
 
 const getAllBookings = async (req, res, next) => {
@@ -102,7 +111,7 @@ const removeBooking = async (req, res, next) => {
   const id = req.params.id;
 
   try {
-    const booking = await Booking.findById(id).populate("bookingUser");
+    const booking = await Booking.findById(id);
     if (!booking) {
       const error = {
         message: "Could not find a booking for the provided id.",
@@ -111,7 +120,16 @@ const removeBooking = async (req, res, next) => {
       return next(error);
     }
 
-    if (booking.bookingUser._id !== req.userId.id) {
+    const user = await User.findById(req.userId.id).populate("bookings");
+    if (!user) {
+      const error = {
+        message: "Could not find a user for the provided id.",
+        code: 404,
+      };
+      return next(error);
+    }
+
+    if (booking.bookingUser.toString() !== req.userId.id) {
       const error = {
         message: "Unauthorized.",
         code: 401,
@@ -121,8 +139,8 @@ const removeBooking = async (req, res, next) => {
 
     const session = await mongoose.startSession();
     session.startTransaction();
-    await booking.bookingUser.bookings.pull(booking);
-    await booking.bookingUser.save({ session: session });
+    await user.pull(booking);
+    await user.save({ session: session });
     await booking.remove({ session: session });
     await session.commitTransaction();
     session.endSession();
