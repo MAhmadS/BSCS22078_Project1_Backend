@@ -21,6 +21,9 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
 
 3. **Routing and Navigation**:
 
+   - Headers:
+     - `Authorization: "Bearer <token>"`
+
    - Backend routes:
 
      - Listing Routes:
@@ -31,6 +34,7 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
 
        - Secure Routes:
          - `POST /api/listings/`: Add a new listing.
+           - `body: { title, location, type, info, pricePerNight, rating }`
          - `DELETE /api/listings/:id`: Remove an existing listing.
 
      - Booking Routes
@@ -40,11 +44,14 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
 
        - Secure Routes
          - `POST /api/bookings/`: Submit a booking.
+           - `body: { listingId, name, email, phone, checkIn, checkOut }`
          - `DELETE /api/bookings/:id`: Remove an existing booking.
 
      - Authentication Routes
        - `POST /api/auth/login`: Submit Login
+         - `body: { email, password }`
        - `POST /api/auth/register`: Submit Signup
+         - `body: { avatar, name, email, password, role }`
 
    - Frontend routes:
      - `/`: Displays the homepage with all listings.
@@ -67,7 +74,8 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
    };
    ```
 
-   `Avatar` can have values `"1"` ,`"2"` ,`"3"` ,`"4"` ,`"5"`. These values corresponds to ${Avatar}.jpg in the Frontend.
+      - `Avatar` can have values `"1"` ,`"2"` ,`"3"` ,`"4"` ,`"5"`. These values corresponds to ${Avatar}.jpg in the Frontend.
+      - `role` can be either `"host"` or `"guest"`
 
    - Listing:
 
@@ -121,11 +129,15 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
    npm install
    ```
 3. Start the backend server:
+
    - For Development
+
    ```bash
    npm run dev
    ```
-    - For Production
+
+   - For Production
+
    ```bash
    npm start
    ```

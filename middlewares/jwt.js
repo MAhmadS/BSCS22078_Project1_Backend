@@ -24,7 +24,10 @@ const checkAuth = (req, res, next) => {
     req.userId = { id: decodedTkn.userId };
     next();
   } catch (err) {
-    const error = new HttpError("Authentication Failed", 401);
+    const error = {
+      message: "Authentication Failed",
+      code: 401,
+    };
     return next(error);
   }
 };

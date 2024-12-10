@@ -10,6 +10,8 @@ router.post(
     check("name").notEmpty(),
     check("email").normalizeEmail().isEmail(),
     check("password").isLength({ min: 8 }),
+    check("role").notEmpty(),
+    check("avatar").notEmpty(),
   ],
   userController.registerUser
 );

@@ -15,12 +15,14 @@ router.use(jwt);
 
 router.post(
   "/",
-  FileUpload.single("image"),
+  FileUpload.single("img"),
   [
     check("title").notEmpty(),
     check("location").notEmpty(),
     check("type").notEmpty(),
-    check("info").notEmpty(),
+    // check("info.guests").notEmpty(),
+    // check("info.bedrooms").notEmpty(),
+    // check("info.bathrooms").notEmpty(),
     check("pricePerNight").notEmpty(),
     check("rating").notEmpty(),
   ],

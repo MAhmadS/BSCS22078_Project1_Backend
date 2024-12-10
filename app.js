@@ -11,7 +11,7 @@ const { usersRouter } = require("./routes/users-routes");
 
 app.use(cors());
 
-app.use(express.json());
+app.use(express.json());  
 
 app.use(
   "/uploads/images",
@@ -40,12 +40,11 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
+    app.listen(5000, () => {
+      console.log("Server is running on port 5000");
+    });
     console.log("Connected to the database");
   })
   .catch((err) => {
     console.log(err);
   });
-
-app.listen(5000, () => {
-  console.log("Server is running on port 5000");
-});

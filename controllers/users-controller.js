@@ -5,10 +5,10 @@ const { validationResult } = require("express-validator");
 //const usersData = [];
 
 const jwtKey = process.env.JWT_KEY;
-const loginUser = (req, res, next) => {
+const loginUser = async(req, res, next) => {
   const { email, password } = req.body;
   try {
-    const user = User.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       const error = {
         message: "User not found.",
@@ -16,14 +16,24 @@ const loginUser = (req, res, next) => {
       };
       return next(error);
     }
-    const isEqual = bcrypt.compare(password, user.password);
-    if (!isEqual) {
+    try {
+      const isEqual = await bcrypt.compare(password, user.password);
+      if (!isEqual) {
+        const error = {
+          message: "Password is incorrect.",
+          code: 401,
+        };
+        return next(error);
+      }
+    } catch (err) {
+      console.log(err);
       const error = {
-        message: "Password is incorrect.",
-        code: 401,
+        message: "Error logging in.",
+        code: 500,
       };
       return next(error);
     }
+
     const token = jwt.sign({ userId: user.id }, jwtKey, { expiresIn: "1h" });
     res.json({ userId: user.id, token: token }).status(200);
   } catch (err) {
@@ -46,6 +56,24 @@ const registerUser = async (req, res, next) => {
   }
 
   const { avatar, name, email, password, role } = req.body;
+
+  if (!["1", "2", "3", "4", "5"].includes(avatar)) {
+    const error = {
+      message:
+        "Invalid avatar value. It must be one of '1', '2', '3', '4', or '5'.",
+      code: 422,
+    };
+    return next(error);
+  }
+
+  if (!["host", "guest"].includes(role)) {
+    const error = {
+      message: "Invalid role value. It must be either 'host' or 'guest'.",
+      code: 422,
+    };
+    return next(error);
+  }
+
   let user;
   try {
     user = await User.findOne({
@@ -75,6 +103,7 @@ const registerUser = async (req, res, next) => {
     role,
     password: hashedPassword,
     bookings: [],
+    listings: [],
   });
 
   try {

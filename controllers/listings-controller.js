@@ -1,5 +1,7 @@
 const Listing = require("../models/Listing");
+const User = require("../models/User");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 // const listingsData = [
 //   {
@@ -98,7 +100,13 @@ const getAllListings = async (req, res, next) => {
   try {
     const listingsData = await Listing.find({});
     res
-      .json(listingsData.map((listing) => listing.toObject({ getters: true })))
+      .json(
+        listingsData.map((listing) => {
+          const listingObject = listing.toObject({ getters: true });
+          listingObject.img = listingObject.img.replace(/\\/g, "/");
+          return listingObject;
+        })
+      )
       .status(200);
   } catch (err) {
     const error = {
@@ -113,8 +121,10 @@ const getListingById = async (req, res, next) => {
   const id = req.params.id;
 
   try {
-    const listingData = await Listing.findOne({ _id: id });
-    res.json(listingData.toObject({ getters: true })).status(200);
+    let listingData = await Listing.findOne({ _id: id });
+    listingData = listingData.toObject({ getters: true });
+    listingData.img = listingData.img.replace(/\\/g, "/");
+    res.json(listingData).status(200);
   } catch (err) {
     const error = {
       message: "Could not find a listing for the provided id.",
@@ -132,17 +142,19 @@ const createListing = async (req, res, next) => {
     };
     return next(error);
   }
-  const user = User.findById(req.userId.id);
+  const user = await User.findById(req.userId.id).populate("listings");
   if (!user) {
     const error = {
-      message: "You are not authorized to create a listing.",
+      message:
+        "You are not authorized to create a listing, try logging in first.",
       code: 401,
     };
     return next(error);
   }
   if (user.role !== "host") {
     const error = {
-      message: "You are not authorized to create a listing.",
+      message:
+        "You are not authorized to create a listing, you must be a host.",
       code: 401,
     };
     return next(error);
@@ -164,8 +176,29 @@ const createListing = async (req, res, next) => {
     return next(error);
   }
 
-  const { title, location, type, info, pricePerNight, rating } = req.body;
-  const newListing = new Listing({
+  const { title, location, type, pricePerNight, rating } = req.body;
+  let { info } = req.body;
+  try {
+    info = JSON.parse(info);
+    console.log(info);
+  } catch (err) {
+    console.log(err);
+    const error = {
+      message: "Invalid info object.",
+      code: 422,
+    };
+    return next(error);
+  }
+  const listing = await Listing.findOne({ title });
+  if (listing) {
+    const error = {
+      message: "Listing with same name already exists.",
+      code: 400,
+    };
+    return next(error);
+  }
+
+  let newListing = new Listing({
     img: req.file.path,
     title,
     location,
@@ -185,8 +218,11 @@ const createListing = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.json(listing.toObject({ getters: true })).status(201);
+    newListing = newListing.toObject({ getters: true });
+    newListing.img = newListing.img.replace(/\\/g, "/");
+    res.json(newListing).status(201);
   } catch (err) {
+    console.log(err);
     const error = {
       message: "Error creating listing.",
       code: 500,
@@ -261,7 +297,13 @@ const searchListings = async (req, res, next) => {
       });
     }
     res
-      .json(listingsData.map((listing) => listing.toObject({ getters: true })))
+      .json(
+        listingsData.map((listing) => {
+          const listingObject = listing.toObject({ getters: true });
+          listingObject.img = listingObject.img.replace(/\\/g, "/");
+          return listingObject;
+        })
+      )
       .status(200);
   } catch (err) {
     const error = {
