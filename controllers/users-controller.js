@@ -5,7 +5,7 @@ const { validationResult } = require("express-validator");
 //const usersData = [];
 
 const jwtKey = process.env.JWT_KEY;
-const loginUser = async(req, res, next) => {
+const loginUser = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -35,7 +35,18 @@ const loginUser = async(req, res, next) => {
     }
 
     const token = jwt.sign({ userId: user.id }, jwtKey, { expiresIn: "1h" });
-    res.json({ userId: user.id, token: token }).status(200);
+    res
+      .json({
+        user: {
+          userId: user.id,
+          avatar: user.avatar,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        token: token,
+      })
+      .status(200);
   } catch (err) {
     const error = {
       message: "Error logging in.",
@@ -118,7 +129,18 @@ const registerUser = async (req, res, next) => {
 
   try {
     const token = jwt.sign({ userId: user.id }, jwtKey, { expiresIn: "1h" });
-    res.json({ userId: user.id, token: token }).status(201);
+    res
+      .json({
+        user: {
+          userId: user.id,
+          avatar: user.avatar,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        token: token,
+      })
+      .status(201);
   } catch (err) {
     const error = {
       message: "Error creating user.",

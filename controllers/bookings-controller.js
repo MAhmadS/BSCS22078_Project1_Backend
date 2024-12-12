@@ -85,6 +85,13 @@ const getAllBookings = async (req, res, next) => {
 
 const getBookingsByUserId = async (req, res, next) => {
   const userId = req.params.id;
+  if (userId !== req.userId.id) {
+    const error = {
+      message: "Unauthorized.",
+      code: 401,
+    };
+    return next(error);
+  }
 
   try {
     const user = await User.findById(userId).populate("bookings");
@@ -139,7 +146,7 @@ const removeBooking = async (req, res, next) => {
 
     const session = await mongoose.startSession();
     session.startTransaction();
-    await user.pull(booking);
+    await user.bookings.pull(booking);
     await user.save({ session: session });
     await booking.remove({ session: session });
     await session.commitTransaction();
@@ -154,9 +161,74 @@ const removeBooking = async (req, res, next) => {
   res.json({ message: "Booking removed." }).status(200);
 };
 
+const removeBookingByAdmin = async (req, res, next) => {
+  const id = req.params.id;
+
+  if (!req.userId) {
+    const error = {
+      message: "Login to remove a booking.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  const admin = await User.findById(req.userId.id);
+  if (!admin) {
+    const error = {
+      message: "Could not find a user for the provided id.",
+      code: 404,
+    };
+    return next(error);
+  }
+
+  if (req.userId.id !== process.env.ADMIN_ID) {
+    const error = {
+      message: "Unauthorized.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  try {
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      const error = {
+        message: "Could not find a booking for the provided id.",
+        code: 404,
+      };
+      return next(error);
+    }
+
+    const user = await User.findById(booking.bookingUser).populate("bookings");
+    if (!user) {
+      const error = {
+        message: "Could not find a user for the provided id.",
+        code: 404,
+      };
+      return next(error);
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await user.bookings.pull(booking);
+    await user.save({ session: session });
+    await booking.remove({ session: session });
+    await session.commitTransaction();
+    session.endSession();
+    res.json({ message: "Booking removed." }).status(200);
+  } catch (err) {
+    const error = {
+      message: "Error removing booking.",
+      code: 500,
+    };
+    return next(error);
+  }
+};
+
 module.exports = {
   createBooking,
   getBookingsByUserId,
   removeBooking,
   getAllBookings,
+  removeBookingByAdmin,
 };

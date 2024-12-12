@@ -4,10 +4,10 @@ const jwt = require("../middlewares/jwt");
 const { check } = require("express-validator");
 
 router.get("/", bookingController.getAllBookings);
-router.get("/:id", bookingController.getBookingsByUserId);
 
 router.use(jwt);
 
+router.get("/:id", bookingController.getBookingsByUserId);
 router.post(
   "/",
   [
@@ -20,6 +20,7 @@ router.post(
   ],
   bookingController.createBooking
 );
+router.delete("/admin/:id", bookingController.removeBookingByAdmin);
 router.delete("/:id", bookingController.removeBooking);
 
 module.exports.bookingRouter = router;

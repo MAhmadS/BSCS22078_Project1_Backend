@@ -231,7 +231,7 @@ const createListing = async (req, res, next) => {
   }
 };
 
-const RemoveListing = async (req, res, next) => {
+const removeListing = async (req, res, next) => {
   const id = req.params.id;
 
   if (!req.userId) {
@@ -241,7 +241,7 @@ const RemoveListing = async (req, res, next) => {
     };
     return next(error);
   }
-  const user = User.findById(req.userId.id).populate("listings");
+  const user = await User.findById(req.userId.id).populate("listings");
   if (!user) {
     const error = {
       message: "You are not authorized to remove a listing.",
@@ -251,7 +251,7 @@ const RemoveListing = async (req, res, next) => {
   }
 
   try {
-    const listing = await Listing.findOne({ _id: id });
+    const listing = await Listing.findById(id);
     if (!listing) {
       const error = {
         message: "Could not find a listing for the provided id.",
@@ -268,14 +268,15 @@ const RemoveListing = async (req, res, next) => {
     }
     const session = await mongoose.startSession();
     session.startTransaction();
-    user.listings.pull(listing);
+    await user.listings.pull(listing);
     await user.save({ session: session });
-    await listing.remove({ session: session });
+    await Listing.deleteOne({ _id: id }, { session: session });
     await session.commitTransaction();
     session.endSession();
 
     res.json({ message: "Deleted Successfully" }).status(200);
   } catch (err) {
+    console.log(err);
     const error = {
       message: "Error deleting listing.",
       code: 500,
@@ -314,10 +315,116 @@ const searchListings = async (req, res, next) => {
   }
 };
 
+const getListingByUserId = async (req, res, next) => {
+  const id = req.params.id;
+  if (id !== req.userId.id) {
+    const error = {
+      message: "Unauthorized.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  try {
+    const user = await User.findById(id).populate("listings");
+    if (!user) {
+      const error = {
+        message: "No user found for the provided id.",
+        code: 404,
+      };
+      return next(error);
+    }
+    let listingsData = user.listings;
+    res
+      .json(
+        listingsData.map((listing) => {
+          const listingObject = listing.toObject({ getters: true });
+          listingObject.img = listingObject.img.replace(/\\/g, "/");
+          return listingObject;
+        })
+      )
+      .status(200);
+  } catch (err) {
+    const error = {
+      message: "Error accessing listings.",
+      code: 404,
+    };
+    return next(error);
+  }
+};
+
+const removeListingByAdmin = async (req, res, next) => {
+  const id = req.params.id;
+
+  if (!req.userId) {
+    const error = {
+      message: "Login to remove a listing.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  const admin = await User.findById(process.env.ADMIN_ID);
+  if (!admin) {
+    const error = {
+      message: "Admin not found.",
+      code: 404,
+    };
+    return next(error);
+  }
+
+  if (req.userId.id !== process.env.ADMIN_ID) {
+    const error = {
+      message: "You are not authorized to delete a listing.",
+      code: 401,
+    };
+    return next(error);
+  }
+
+  try {
+    const listing = await Listing.findById(id);
+    if (!listing) {
+      const error = {
+        message: "Could not find a listing for the provided id.",
+        code: 404,
+      };
+      return next(error);
+    }
+
+    const user = await User.findById(listing.creator).populate("listings");
+    if (!user) {
+      const error = {
+        message: "Could not find a user for the listing.",
+        code: 404,
+      };
+      return next(error);
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await user.listings.pull(listing);
+    await user.save({ session: session });
+    await Listing.deleteOne({ _id: id }, { session: session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ message: "Deleted Successfully" }).status(200);
+  } catch (err) {
+    console.log(err);
+    const error = {
+      message: "Error deleting listing.",
+      code: 500,
+    };
+    return next(error);
+  }
+};
+
 module.exports = {
   getAllListings,
   getListingById,
+  getListingByUserId,
   searchListings,
   createListing,
-  RemoveListing,
+  removeListing,
+  removeListingByAdmin,
 };

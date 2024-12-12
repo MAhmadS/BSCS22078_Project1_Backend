@@ -11,7 +11,7 @@ const { usersRouter } = require("./routes/users-routes");
 
 app.use(cors());
 
-app.use(express.json());  
+app.use(express.json());
 
 app.use(
   "/uploads/images",
@@ -46,5 +46,5 @@ mongoose
     console.log("Connected to the database");
   })
   .catch((err) => {
-    console.log(err);
+    console.log("Connection to the database failed, Error Code:", err.code);
   });

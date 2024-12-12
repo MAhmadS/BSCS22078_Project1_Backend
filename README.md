@@ -40,7 +40,7 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
      - Booking Routes
 
        - `GET /api/bookings/`: Fetch all bookings.
-       - `GET /api/bookings/:id`: Fetch a specific booking.
+       - `GET /api/bookings/:id`: Fetch bookings of a user.
 
        - Secure Routes
          - `POST /api/bookings/`: Submit a booking.

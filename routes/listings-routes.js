@@ -13,6 +13,7 @@ router.get("/:id", listingController.getListingById);
 router.use(jwt);
 //only admin is allowed
 
+router.get("/user/:id", listingController.getListingByUserId);
 router.post(
   "/",
   FileUpload.single("img"),
@@ -29,6 +30,7 @@ router.post(
   listingController.createListing
 );
 
-router.delete("/:id", listingController.RemoveListing);
+router.delete("/admin/:id", listingController.removeListingByAdmin);
+router.delete("/:id", listingController.removeListing);
 
 module.exports.listingRouter = router;
