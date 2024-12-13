@@ -33,19 +33,22 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
        - `GET /api/listings/search?query:<location>`: Fetch all listings with specific location.
 
        - Secure Routes:
+         - `GET /api/listings/user/:id` : Get all listings of a user.
          - `POST /api/listings/`: Add a new listing.
            - `body: { title, location, type, info, pricePerNight, rating }`
          - `DELETE /api/listings/:id`: Remove an existing listing.
+         - `DELETE /api/listings/admin/:id`: Remove an existing listing by admin.
 
      - Booking Routes
 
        - `GET /api/bookings/`: Fetch all bookings.
-       - `GET /api/bookings/:id`: Fetch bookings of a user.
 
        - Secure Routes
+       - `GET /api/bookings/:id`: Fetch bookings of a user.
          - `POST /api/bookings/`: Submit a booking.
            - `body: { listingId, name, email, phone, checkIn, checkOut }`
          - `DELETE /api/bookings/:id`: Remove an existing booking.
+         - `DELETE /api/bookings/admin/:id`: Remove an existing booking by admin.
 
      - Authentication Routes
        - `POST /api/auth/login`: Submit Login
@@ -54,9 +57,54 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
          - `body: { avatar, name, email, password, role }`
 
    - Frontend routes:
-     - `/`: Displays the homepage with all listings.
-     - `/listings/:id`: Displays detailed information about a specific property.
-     - `/book/:id`: Redirects to a booking form.
+    
+    #### 1. Routes for Logged-in Users (Host or Guest)
+
+    - `/` : Renders the home page for logged-in users.  
+    - `/listing/add` : Page to add a new listing.  
+    - `/book/:id` : Allows the user to book a listing with the given ID.  
+      - Parameters:  
+        - `id`: ID of the listing to book.  
+    - `/bookings/:userId` : Displays all bookings made by the user with the given user ID.  
+      - Parameters:  
+        - `userId`: ID of the user.  
+    - `/listings/user/:userId` : Shows all listings created by the user with the given user ID.  
+      - Parameters:  
+        - `userId`: ID of the user.  
+    - `/listings/:id` : Displays details for a specific listing with the given ID.  
+      - Parameters:  
+        - `id`: ID of the listing.  
+    - `*` : Renders an error page for unmatched routes.  
+
+    ---
+
+    #### 2. Routes for Admin Users
+
+    - `/` : Renders the admin-specific home page.  
+    - `/listing/add` : Page for adding a new listing.  
+    - `/book/:id` : Allows the admin to book a listing with the given ID.  
+      - Parameters:  
+        - `id`: ID of the listing to book.  
+    - `/admin/bookings/` : Shows all bookings in the system.  
+    - `/admin/listings/` : Displays all listings in the system.  
+    - `/listings/:id` : Displays details for a specific listing with the given ID.  
+      - Parameters:  
+        - `id`: ID of the listing.  
+    - `*` : Renders an error page for unmatched routes.  
+
+    ---
+
+    #### 3. Routes for Not Logged-in Users
+
+    - `/` : Renders the home page for non-logged-in users.  
+    - `/listings/:id` : Displays details for a specific listing with the given ID.  
+      - Parameters:  
+        - `id`: ID of the listing.  
+    - `/listing/add` : Redirects to the login page to add a listing.  
+    - `/auth/register` : Displays the signup page.  
+    - `/auth/login` : Displays the login page.  
+    - `*` : Renders an error page for unmatched routes.  
+
 
    **Schemas**:
 
@@ -105,6 +153,32 @@ This project integrates a React-based frontend with a Node.js and Express.js bac
      bookingUser: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
      }
    ```
+
+  **Sample Ids**: 
+
+  - Admin Id
+  ```javascript
+  {
+    email: 'admin@gmail.com',
+    password: '11223344'
+  }
+  ```
+
+  *Sample Ids*:
+  - Host 
+  ```javascript
+  {
+    email: 'ahmad@gmail.com',
+    password: '11223344'
+  }
+  ```
+  - Guest
+  ```javascript
+  {
+    email: 'ahmad1@gmail.com',
+    password: '11223344'
+  }
+  ```
 
 ## Instructions for Running the Project
 
