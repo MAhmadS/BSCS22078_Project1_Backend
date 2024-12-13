@@ -1,5 +1,6 @@
 const Listing = require("../models/Listing");
 const User = require("../models/User");
+const Booking = require("../models/Booking");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 
@@ -266,6 +267,16 @@ const removeListing = async (req, res, next) => {
       };
       return next(error);
     }
+
+    const booking = await Booking.findOne({ listingId: id });
+    if (booking) {
+      const error = {
+        message: "Cannot delete listing with active bookings.",
+        code: 400,
+      };
+      return next(error);
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
     await user.listings.pull(listing);
@@ -396,6 +407,15 @@ const removeListingByAdmin = async (req, res, next) => {
       const error = {
         message: "Could not find a user for the listing.",
         code: 404,
+      };
+      return next(error);
+    }
+
+    const booking = await Booking.findOne({ listingId: id });
+    if (booking) {
+      const error = {
+        message: "Cannot delete listing with active bookings.",
+        code: 400,
       };
       return next(error);
     }

@@ -212,11 +212,13 @@ const removeBookingByAdmin = async (req, res, next) => {
     session.startTransaction();
     await user.bookings.pull(booking);
     await user.save({ session: session });
-    await booking.remove({ session: session });
+    await booking.deleteOne({_id: id},{ session: session });
     await session.commitTransaction();
     session.endSession();
+
     res.json({ message: "Booking removed." }).status(200);
   } catch (err) {
+    console.log(err)
     const error = {
       message: "Error removing booking.",
       code: 500,
